@@ -1,0 +1,16 @@
+{
+  "name": "p2pqueue",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "start": "node node_modules/foglet-signaling-server/bin/express-signaling-server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "foglet-core": "^5.1.2",
+    "foglet-signaling-server": "^1.0.3",
+    "wrtc": "^0.4.7"
+  }
+}
