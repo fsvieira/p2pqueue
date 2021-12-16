@@ -5,7 +5,7 @@ class Queue {
         this.lastRequest = 0;
         this.startTime = new Date().getTime();
         this.processed = 0;
-        this.avgProcessTime = 1000;
+        this.avgProcessTime;
         this.requesting = false;
     }
     
@@ -20,30 +20,41 @@ class Queue {
     pop () {
         const l = this.queue.length;
 
-        this.processed++;
-        if (this.processed >= 50 || l <= 1) {
-            const now = new Date().getTime();
-            this.avgProcessTime += (now - this.startTime) / this.processed;
-            this.processed = 0; 
-            this.startTime = now;
+        const now = new Date().getTime();
+
+        if (this.lastTimePop) {
+            if (this.avgProcessTime) {
+                this.avgProcessTime = (this.avgProcessTime + now - this.lastTimePop) / 2;
+            }
+            else {
+                this.avgProcessTime = now - this.lastTimePop;
+            }
         }
 
-        const estimatedTime = l * this.avgProcessTime;
+        const estimatedTime = l * this.avgProcessTime || 1000;
+
+        console.log(`AVG Process Time ${this.avgProcessTime}, Estimated Finish Time ${estimatedTime}`);
 
         if (this.get && estimatedTime < 1000 * 30 && !this.requesting) {
             this.requesting = true;
             console.log("GET", estimatedTime);
 
-            const elements = Math.floor((1000 * 30) / (estimatedTime || 100));
+            const elements = Math.ceil(((1000 * 30) / (estimatedTime || 100)) * 1.20);
 
             console.log(elements);
             this.get(elements);
 
-            setInterval(() => this.requesting = false, 2000);
+            const wait = estimatedTime * 0.5;
+            setInterval(() => this.requesting = false, wait < 2000 ? 2000: wait );
         } 
 
-
-        return this.queue.pop();
+        if (l === 0) {
+            this.lastTimePop = null;
+        }
+        else {
+            this.lastTimePop = now;
+            return this.queue.pop();
+        }
     }
 
     requestPop (n) {
