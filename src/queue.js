@@ -59,7 +59,6 @@ class Queue {
         this.requesting = false;
 
         // Push Avg Time,
-        this.pushCounter = 0;
         this.startPushTime = now();
         this.pushAvgTime;
 
@@ -73,21 +72,19 @@ class Queue {
     }
 
     push(...items) {
-        this.pushCounter += items.length;
+        this.queue.push(...items);
 
+        const pushCounter = items.length;
         const nowTime = now();
-        const avg = (nowTime - this.startPushTime) / this.pushCounter;
+
+        const avg = (nowTime - this.startPushTime) / pushCounter;
         this.pushAvgTime = this.pushAvgTime?(this.pushAvgTime + avg) / 2:avg;
 
-        console.log("-- Counter ", this.pushCounter, this.pushAvgTime);
+        this.startPushTime = nowTime;
 
         if (!this.startPopTime) {
             this.startPopTime = nowTime;
-            this.startPushTime = nowTime;
-            this.pushCounter = 0;
         }
-
-        this.queue.push(...items);
     }
    
     pop () {
@@ -96,8 +93,7 @@ class Queue {
         const nowTime = now();
 
         if (this.startPopTime) {
-            this.popCounter++;
-            const avg = (nowTime - this.startPopTime) / this.popCounter;
+            const avg = (nowTime - this.startPopTime);
             this.popAvgTime = this.popAvgTime?(this.popAvgTime + avg) / 2:avg;
         }
 
@@ -107,9 +103,6 @@ class Queue {
                 minItemsToReceive = Math.ceil((this.pushAvgTime / this.popAvgTime) * 2);
             }
         }
-
-        console.log("------->", this.pushAvgTime, this.popAvgTime, l, minItemsToReceive);
-        console.log(l, minItemsToReceive, !this.requesting);
 
         if (this.get && l <= minItemsToReceive && !this.requesting) {
             this.requesting = true;
@@ -151,11 +144,9 @@ class Queue {
 
             const items =  this.queue.splice(0, toSend);
 
-            this.popCounter += items.length;
-
             if (this.startPopTime) {
                 const nowTime = now();
-                const avg = (nowTime - this.startPopTime) / this.popCounter;
+                const avg = (nowTime - this.startPopTime) / items.length;
                 this.popAvgTime = this.popAvgTime?avg:(this.popAvgTime + avg) / 2;
             }
 
