@@ -117,59 +117,65 @@ export default class RemoteCall {
     }
 
     process () {
-        let running = 0;
-        const next = async () => {
-            if (running < this.maxConcurrentCalls) {
-                const data = await this.queue.pop();
-                const {
-                    tag,
-                    args
-                } = data;
+            let running = 0;
+            const next = async () => {
+                if (running < this.maxConcurrentCalls) {
+                    try {
+                        const data = await this.queue.pop();
+                        const {
+                            tag,
+                            args
+                        } = data;
 
-                const {fn, memoization} = this.fns[tag];
+                        const {fn, memoization} = this.fns[tag];
 
-                if (fn) {
-                    const done = (value, err) => {
-                        if (err) {
-                            data.status = 'reject';
-                            data.error = err;
-                            if (memoization) {
-                                delete memoization[argsHash];
+                        if (fn) {
+                            const done = (value, err) => {
+                                if (err) {
+                                    data.status = 'reject';
+                                    data.error = err;
+                                    if (memoization) {
+                                        delete memoization[argsHash];
+                                    }
+                                }
+                                else {
+                                    data.status='resolve';
+                                    if (memoization) {
+                                        const argsHash = this.hash(JSON.stringify(args));
+                                        memoization[argsHash] = {value}
+                                    };
+                                }
+
+                                this.result(data, value);
+                            };
+
+                            running++;
+                            try {
+                                const result = await fn(...args, done);
+
+                                if (result !== undefined) {
+                                    done(result);
+                                }
                             }
+                            catch(e) {
+                                done(undefined, e);
+                            }
+
+                            running--;   
+                            setTimeout(next, 0); // dont't put call on call stack ? 
                         }
                         else {
-                            data.status='resolve';
-                            if (memoization) {
-                                const argsHash = this.hash(JSON.stringify(args));
-                                memoization[argsHash] = {value}
-                            };
-                        }
-
-                        this.result(data, value);
-                    };
-
-                    running++;
-                    try {
-                        const result = await fn(...args, done);
-
-                        if (result !== undefined) {
-                            done(result);
+                            done(undefined, 'bad function!!');
                         }
                     }
-                    catch(e) {
-                        done(undefined, e);
+                    catch (e) {
+                        console.log(e);
+                        return e;
                     }
-
-                    running--;   
-                    setTimeout(next, 0); // dont't put call on call stack ? 
-                }
-                else {
-                    done(undefined, 'bad function!!');
                 }
             }
-        }
 
-        next();
+            next();
     }
 }
 
