@@ -5,6 +5,7 @@ import TCP from 'libp2p-tcp'
 import Gossipsub from 'libp2p-gossipsub'
 import  KadDHT from 'libp2p-kad-dht'
 import Bootstrap from 'libp2p-bootstrap'
+import MulticastDNS from 'libp2p-mdns'
 
 export class P2P {
     constructor (options={}) {
@@ -26,7 +27,7 @@ export class P2P {
                 streamMuxer: [MPLEX],
                 pubsub: Gossipsub,
                 dht: KadDHT,
-                peerDiscovery: [ Bootstrap ]
+                peerDiscovery: [ Bootstrap, MulticastDNS ]
             },
             config: {
                 dht: {
@@ -36,7 +37,6 @@ export class P2P {
                 peerDiscovery: {
                     [Bootstrap.tag]: {
                         list: bootstrap,
-                        interval: 5000, // default is 10 ms,
                         enabled: bootstrap.length > 0
                     }
                 }
@@ -64,5 +64,12 @@ export class P2P {
         return node;
     }
 
+    get address () {
+        return this.node.multiaddrs.map(ma =>
+            `${ma.toString()}/p2p/${this.node.peerId.toB58String()}`
+        );
+
+        // return this.node.transportManager.getAddrs()
+    }
 }
 
