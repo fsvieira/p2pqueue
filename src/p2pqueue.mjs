@@ -118,9 +118,8 @@ export default class Queue {
 
             this.send({
                 elements,
-                estimatedFinishTime,
-                sendElements
-            });
+                estimatedFinishTime
+            }, sendElements);
 
         }, 2000);
     }
@@ -129,26 +128,40 @@ export default class Queue {
         return this.queue.length;            
     }
 
-    async send (data) {
+    async send (data, sendElements) {
         const peers = shuffle(Object.keys(this.conn.connectedPeers)).slice(0, 4);
 
         // console.log(`Send Data: ${JSON.stringify(data)}`);
 
         if (peers.length) {
+
+            let elementsSplit = 0;
+            if (sendElements) {
+                elementsSplit = Math.ceil(sendElements.length / peers.length);
+            }
+
             for (let i=0; i<peers.length; i++) {
 
                 const peerId = PeerId.createFromB58String(peers[i]);
+                const sendElementsSplit = sendElements && sendElements.length > 0 ? sendElements.splice(0, elementsSplit) : undefined;
+
                 try {
                     const { stream } = await this.conn.node.dialProtocol(peerId, '/queue/1.0.0')
 
+
                     await pipe(
-                        [JSON.stringify(data)],
+                        [
+                            JSON.stringify({
+                                ...data, 
+                                sendElements: sendElementsSplit
+                            })
+                        ],
                         stream
                     );
                 }
                 catch (e) {
-                    if (data.sendElements) {
-                        this.push(...data.sendElements);
+                    if (sendElementsSplit) {
+                        this.push(...sendElementsSplit);
                     }
 
                     delete this.conn.connectedPeers[peers[i]];
