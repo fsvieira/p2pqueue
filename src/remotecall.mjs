@@ -1,8 +1,8 @@
-import {P2P} from './src/p2p.mjs'
-import Queue from './src/p2pqueue.mjs'
 import crypto from 'crypto'
+import {pipe} from 'it-pipe'
 
-class RemoteCall {
+
+export default class RemoteCall {
     constructor (queue, maxConcurrentCalls = 1) {
         this.queue = queue;
         this.fns = {};
@@ -11,6 +11,24 @@ class RemoteCall {
         this.maxConcurrentCalls = maxConcurrentCalls;
 
         this.callerID = this.queue.conn.node.peerId.toB58String();
+
+        this.queue.conn.node.handle('/rcall/1.0.0', async ({ connection, stream }) => {
+            pipe(
+              stream,
+              source => (async () => {
+                try {
+                    for await (const msg of source) {
+                        const data = JSON.parse(msg.toString());
+                        this.result(data, data.result);
+                    }
+                }
+                catch (e) {
+                  console.log(e);
+                }
+              })()
+            );
+        });
+
     }
 
     hash (text) {
@@ -34,7 +52,7 @@ class RemoteCall {
 
                 if (data !== undefined) {
                     const {value, id} = data;
-                    if (value) {
+                    if (value !== undefined) {
                         return value;
                     }
                     else {
@@ -46,20 +64,20 @@ class RemoteCall {
             }
 
             const id = this.ids++;
-            this.queue.push({
-                id,
-                tag,
-                args,
-                caller: this.queue.conn.address,
-                callerID: this.callerID
-            });
-
             if (values) {
                 values[argsHash] = {id};
             }
 
             return new Promise((resolve, reject) => {
                 this.calls[id] = [{resolve, reject}];
+                this.queue.push({
+                    id,
+                    tag,
+                    args,
+                    caller: this.queue.conn.address,
+                    callerID: this.callerID
+                });
+
             });
         };
     }
@@ -79,9 +97,22 @@ class RemoteCall {
                     reject(data.error);
                 }
             }
+
+            delete this.calls[data.id];
         }
         else {
-            console.log("TODO: Remote call, send results!!", data, data.caller[0]);
+            try {
+                const { stream } = await this.queue.conn.node.dialProtocol(data.caller[0], '/rcall/1.0.0')
+
+                data.result = result;
+                await pipe(
+                    [JSON.stringify(data)],
+                    stream
+                );        
+            }
+            catch (e) {
+                console.log("Error Sending Result --> ", e);
+            }
         }
     }
 
@@ -102,7 +133,9 @@ class RemoteCall {
                         if (err) {
                             data.status = 'reject';
                             data.error = err;
-                            delete memoization[argsHash];
+                            if (memoization) {
+                                delete memoization[argsHash];
+                            }
                         }
                         else {
                             data.status='resolve';
@@ -139,45 +172,4 @@ class RemoteCall {
         next();
     }
 }
-
-async function main () {
-    try {
-
-        const [_node, _js, n=0] = process.argv;
-
-        const nodeP2P = new P2P({bootstrap: []});
-        const node = await nodeP2P.start();
-
-        const addr = node.multiaddrs.map(
-            ma => `${ma.toString()}/p2p/${node.peerId.toB58String()}`
-        );
-
-        console.log(addr);
-        const q = new Queue(nodeP2P);
-
-        const rc = new RemoteCall(q);
-
-        const fib = rc.register(async (n, done) => {            
-            if (n <= 1) {
-                return n;
-            }
-
-            Promise.all([fib(n - 1), fib(n - 2)]).then(([a, b]) => {
-                done(a + b);
-            });
-        }, true);
-
-        rc.process();
-        
-        if (n > 0) {
-            const r = await fib(n);
-            console.log("Result", n, r);
-        }
-    }
-    catch (e) {
-        console.log(e);
-    }
-}
-
-main();
 

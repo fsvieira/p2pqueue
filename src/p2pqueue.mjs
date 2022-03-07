@@ -94,7 +94,8 @@ export default class Queue {
             const timePerc = (finishTime / estimatedFinishTime) - 1; 
 
             let sendElements;
-            if (timePerc >= 0.1) {
+
+            if (timePerc >= 0.1 && Object.keys(this.conn.connectedPeers).length > 0) {
 
                 // calculate number of elements to send,
 
@@ -110,7 +111,8 @@ export default class Queue {
 
                 console.log("----->", totalSendElements, elementsPerc);
                 if (elementsPerc >= 0.1) {
-                    sendElements = this.queue.splice(-totalSendElements, totalSendElements)
+                    sendElements = this.queue.splice(-totalSendElements, totalSendElements);
+                    console.log("Send Elements", sendElements);
                 }
             }
 
@@ -123,30 +125,42 @@ export default class Queue {
         }, 2000);
     }
 
+    get size () {
+        return this.queue.length;            
+    }
+
     async send (data) {
         const peers = shuffle(Object.keys(this.conn.connectedPeers)).slice(0, 4);
 
         // console.log(`Send Data: ${JSON.stringify(data)}`);
 
-        for (let i=0; i<peers.length; i++) {
+        if (peers.length) {
+            for (let i=0; i<peers.length; i++) {
 
-            const peerId = PeerId.createFromB58String(peers[i]);
-            try {
-                const { stream } = await this.conn.node.dialProtocol(peerId, '/queue/1.0.0')
+                const peerId = PeerId.createFromB58String(peers[i]);
+                try {
+                    const { stream } = await this.conn.node.dialProtocol(peerId, '/queue/1.0.0')
 
-                await pipe(
-                    [JSON.stringify(data)],
-                    stream
-                );        
-            }
-            catch (e) {
-                if (data.sendElements) {
-                    this.push(...data.sendElements);
+                    await pipe(
+                        [JSON.stringify(data)],
+                        stream
+                    );
                 }
+                catch (e) {
+                    if (data.sendElements) {
+                        this.push(...data.sendElements);
+                    }
 
-                delete this.conn.connectedPeers[peers[i]];
+                    delete this.conn.connectedPeers[peers[i]];
 
-                console.log("Sending --> ", e);
+                    console.log("Sending --> ", e);
+                }
+            }
+        }
+        else {
+            // put elements back,
+            if (data.sendElements) {
+                this.push(...data.sendElements);
             }
         }
     }
@@ -226,4 +240,3 @@ export default class Queue {
     }
 
 }
-
