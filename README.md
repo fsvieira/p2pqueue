@@ -186,23 +186,16 @@ Run: `node pi.mjs`
 
 In this example the nodes will connect with each other and will help to calculate the PI aproximation using monte-carlo simulations.
 
+# Limitations
+Queue and RemoteCall dont have any recover mecanism, so when an item is sent to other peer it can get lost, this is worst in case of remoteCall where a call that is not sent back may block the program execution and create a lot of zombie functions.
 
-# Run 
 
-  * Clone git repo,
-  * run `npm install`
-  * node queue-example.mjs
-    * Will run a simple example of p2p queue with multiple nodes on same process.
-  * Terminal 1: node rcall-example.mjs 100
-  * Terminal 2: node rcall-example.mjs
-    * Will run the remote call example to calculate fib numbers, the first parameter is the number to calc, if no number to calc is given then 
-     the next processes are just going to help on the calculations
-    
 # Queue Arquitecture
-  * The Queue uses the libp2p (https://libp2p.io/) to connect and comunicate,
-  * Every 2 seconds nodes sends their stats to 4 random connected peers,
-  * When a node receives the stats from other peers it will calculate the avg global number of elements on queue and avg estimation of finish time,
-  * If a node is more than 10% above avarage finish time, then it will send elements to the network
+  * The queue arquitecture uses a very simple concept, all peers should finish at the same time, this would mean that the work/items on peers queue is well balanced. 
+  * So a simple rule is used, it a peer is above global avarage finish time then it must sends some of its items to balance the network workload.
+  * Every peer on every 2 seconds sends their knoloage of the global stats (avg number of elements on network and avg estimated finish time), that is calculated using its own local stats and the received stats from other peeers.
+  * If a peer is more than 10% above avarage finish time, then it will send elements to the network to get that value balanced.
+  * Each peer will slowly converge to the avarage estimated finish time.  
 
 
 
