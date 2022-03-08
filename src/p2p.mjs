@@ -48,16 +48,12 @@ export class P2P {
         node.connectionManager.on('peer:connect', (connection) => {
             const peerId = connection.remotePeer.toB58String();
             this.connectedPeers[peerId] = connection;
-
-            // console.log('Connection established to:', peerId)
         })
 
         node.connectionManager.on('peer:disconnect', (connection) => {
             const peerId = connection.remotePeer.toB58String()
 
             delete  this.connectedPeers[peerId]
-
-            // console.log('Disconnection from:', peerId)
         })
 
         this.node = node;

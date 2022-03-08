@@ -62,7 +62,7 @@ export default class Queue {
                             avgFinishTime: estimatedFinishTime
                         };
 
-                        console.log(`got: ${(data.sendElements || []).length}, self: el=${queueSize}, time=${finishTime / (1000 * 60)}; global: el=${elements}, time=${estimatedFinishTime / (1000 * 60)}`);
+                        // console.log(`got: ${(data.sendElements || []).length}, self: el=${queueSize}, time=${finishTime / (1000 * 60)}; global: el=${elements}, time=${estimatedFinishTime / (1000 * 60)}`);
                     }
                 }
                 catch (e) {
@@ -109,10 +109,8 @@ export default class Queue {
                 const totalSendElements = Math.round((finishTime - estimatedFinishTime) / (popTime + serverPopTime));
                 const elementsPerc = totalSendElements / queueSize;
 
-                console.log("----->", totalSendElements, elementsPerc);
                 if (elementsPerc >= 0.1) {
                     sendElements = this.queue.splice(-totalSendElements, totalSendElements);
-                    console.log("Send Elements", sendElements);
                 }
             }
 
@@ -130,8 +128,6 @@ export default class Queue {
 
     async send (data, sendElements) {
         const peers = shuffle(Object.keys(this.conn.connectedPeers)).slice(0, 4);
-
-        // console.log(`Send Data: ${JSON.stringify(data)}`);
 
         if (peers.length) {
 
@@ -165,8 +161,6 @@ export default class Queue {
                     }
 
                     delete this.conn.connectedPeers[peers[i]];
-
-                    console.log("Sending --> ", e);
                 }
             }
         }
@@ -247,7 +241,6 @@ export default class Queue {
     }
 
     close () {
-        console.log("------- Close -----");
         clearInterval(this.broadcastID);
         this.conn.node.unhandle('/queue/1.0.0');
     }
