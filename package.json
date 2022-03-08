@@ -2,16 +2,11 @@
   "name": "p2pqueue",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "start": "node node_modules/foglet-signaling-server/bin/express-signaling-server.js"
-  },
   "author": "",
   "license": "ISC",
   "description": "",
   "dependencies": {
     "@libp2p/mplex": "^1.0.0",
-    "foglet-core": "^5.1.2",
-    "foglet-signaling-server": "^1.0.3",
     "it-pipe": "^2.0.3",
     "libp2p": "^0.36.2",
     "libp2p-bootstrap": "^0.14.0",
@@ -24,7 +19,6 @@
     "libp2p-websockets": "^0.16.2",
     "multiaddr": "^10.0.1",
     "peer-id": "^0.16.0",
-    "uint8arrays": "^3.0.0",
-    "wrtc": "^0.4.7"
+    "uint8arrays": "^3.0.0"
   }
 }
