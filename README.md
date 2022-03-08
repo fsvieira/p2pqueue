@@ -6,15 +6,36 @@ Distributed P2P Queue implemented with libp2p and a remote call implementation o
  * Stage: Prof-of-concept
    * Working but still have many things to be polished.
 
+ * [Install](#install)
+ * [API](#api)
+   * [P2P](#p2p)
+     * [start](#start) 
+   * [Queue](#queue)
+     * [push](#push)
+     * [pop](#pop)
+     * [size](#size)
+     * [close](#close) 
+   * [Remote Call](#remotecall)
+     * [register](#register)
+     * [process](#process) 
+ * [Examples](#examples)
+   * [Queue Example](#queue-example)
+   * [Remote Call Example](#remote-call-example) 
+   * [Monte-Carlo PI](#monte-carlo-pi)
+ * [Limitations](#limitations)
+ * [Queue Arquitecture](#queue-arquitecture)
+
+
 # Install
   At this stage the only option is to clone the repo and run 
   `npm install` at the root of repo, node version must be >= 16.
 
 # API
 
-## P2P (./src/p2p.mjs)
+## P2P
 
-Usage `const node = new P2P(options)`
+File: ./src/p2p.mjs
+Usage: `const node = new P2P(options)`
 
 * Options: 
   * peerId, the node peerId if none is given it will be generated, 
@@ -29,8 +50,9 @@ running on the same network they still can connect.
 ### start
  Start the node to start listening to connections. ex. `node.start()`
 
-## Queue (./src/p2pqueue.mjs)
+## Queue 
 
+File: ./src/p2pqueue.mjs
 Usage `const queue = new Queue(node)`
 
 This creates a new Queue using the node handle comunication with other nodes.
@@ -54,8 +76,9 @@ This creates a new Queue using the node handle comunication with other nodes.
  It will close the queue, and all related services on the node, but it will node close the node.
 
 
-## RemoteCall (./src/remotecall.mjs)
+## RemoteCall
 
+File: ./src/remotecall.mjs
 This module uses the p2p queue to distrute the computing of functions on the network, the functions are not sent on the network they are alredy defined 
 on each node, meaning all nodes must be equal. 
 
@@ -159,13 +182,14 @@ Usage `rc.process();`
 
 # Examples
 
-## Queue Example: queue-example.mjs
+## Queue Example 
 
 Run: `node queue-example.mjs`
 
 This example demonstrates how to use the queue push and pop with a bunch of connected nodes.
 
-## Remote Call Example: rcall-example.mjs
+## Remote Call Example 
+
 
 Run: `node rcall-example.mjs`
 ...
@@ -176,7 +200,7 @@ Run: `node rcall-example.mjs`
 In this example the nodes will connect with each other and will help to calculate the fib function.
 The example as "sleep" put on purpose to observe peers distribution. 
 
-## Monte-Carlo PI: pi.mjs
+## Monte Carlo PI
 
 Run: `node pi.mjs`
 ...
