@@ -5,7 +5,7 @@ Distributed P2P Queue implemented with libp2p and a remote call implementation o
 
 # Version/Stage
 * Version: Alpha
-* Stage: Prof-of-concept
+* Stage: Propf-of-concept
 * Working but still have many things to polished.
 
 * [Install](#install)
