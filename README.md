@@ -6,7 +6,7 @@ Distributed P2P Queue implemented with libp2p and a remote call implementation o
 # Version/Stage
 * Version: Alpha
 * Stage: Propf-of-concept
-* Working but still have many things to polished.
+* Working but there are still many things to be polished.
 
 * [Install](#install)
 * [API](#api)
@@ -39,9 +39,9 @@ File: ./src/p2p.mjs
 Usage: `const node = new P2P(options)`
 
 * Options:
-* peerId, the node peerId. Automatic generated if none is provided,
+* peerId, the node peerId. Automatically generated if none is provided,
 * port, the node address port, default 0 (an available port is automatically selected),
-* bootstrap, an array of known address to this node connects at start, default to [].
+* bootstrap, an array of known addresses to this node connects at start, default to [].
 
 Ex. `const nodeP2P = new P2P({bootstrap});`
 
@@ -63,11 +63,11 @@ Push n elements to the queue,
 Usage `queue.push(1, 2, 4)`
 
 ### pop
-Pop one element of the queue, since this is a distributed queue some elements may come from other nodes, and order is not granted.
+Pop one element off the queue, since this is a distributed queue some elements may come from other nodes, and order is not granted.
 
 Usage: `const el = await queue.pop()`
 
-Pop also accepts a timeout in seconds like this `const el = await queue.pop(5000)` when queue is empty it will wait 5 seconds, if queue still
+Pop also accepts a timeout in seconds like this `const el = await queue.pop(5000)` when queue is empty it will wait 5 seconds, if queue is still
 empty after timeout, then it will throw a timeout exception.
 
 ### size
@@ -95,7 +95,7 @@ Constructor `constructor (queue, maxConcurrentCalls = 1)`
 
 It will register a function as a remote call, where:
 * fn is a function
-* memoization, when true functions results are cached and returned when available. If false, function will always run to return results.
+* memoization, when true function results are cached and returned when available. If false, function will always run to return results.
 
 For example, fib functions is a good function for memoization because calling fib with the same arguments will always return the same results,
 
@@ -151,7 +151,7 @@ Run: `node rcall-example.mjs 1000` where 1000 is fib number to calculate.
 Run: `node rcall-example.mjs`
 
 In this example, the nodes will connect with each other and will assist to calculate the fib function.
-The example as "sleep" put intentionally to observe peers distribution.
+We added a sleep on this function to slow it down. Otherwise, this function would be too fast, and we wouldn't be able to see any distribution on other peers.
 
 ## Monte Carlo PI
 
@@ -164,11 +164,10 @@ Run: `node pi.mjs`
 In this example, the nodes will connect with each other and will assist to calculate the PI approximation using Monte Carlo simulations.
 
 # Limitations
-Queue and RemoteCall don't have any recover mechanism, this means that there is the risk of losing items when sending them to other peers. The problem is worst with remoteCall because if lost it will never return, which may cause program execution to block and create many zombie functions.
+Queue and RemoteCall don't have any recover mechanism, this means that there is the risk of losing items when sending them to other peers. The problem is as its worst with remoteCall because if lost it will never return, which may cause program execution to block and create many zombie functions.
 
 # Queue Architecture
-* The queue architecture uses a very simple concept, all peers should finish simultaneous, this would mean that the work/items on peer's queue is well-balanced.
-* To balance the work we use a simple rule: if a peer is above global average finish time then it must send some of its items to balance the network workload.
-* Every peer on every 2 seconds sends their knowledge of the global stats (avg number of elements on network and avg estimated finish time), calculated using its own local stats and the received stats from other peers.
-* If a peer is more than 10% above average finish time, then it will send elements to the network to get that value balanced.
+* The queue architecture uses a very simple concept, all peers should finish simultaneously, this would mean that the work/items on peer's queue is well-balanced.
+* Every 2 seconds, each peer sends their knowledge of the global stats (avg number of elements on network and avg estimated finish time), calculated using its own local stats and the received stats from other peers.
+* To balance the work we use a simple rule: if a peer is above 10% global average finish time then it must send some of its items to balance the network workload.
 * Each peer will slowly converge to the average estimated finish time.
