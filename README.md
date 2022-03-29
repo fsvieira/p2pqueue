@@ -151,7 +151,7 @@ Run: `node rcall-example.mjs 1000` where 1000 is fib number to calculate.
 Run: `node rcall-example.mjs`
 
 In this example, the nodes will connect with each other and will assist to calculate the fib function.
-We added a sleep on this function to slow it down. Otherwise, this function would be too fast, and we wouldn't be able to see any distribution on other peers.
+We added a sleep in this function to slow it down. Otherwise, it would be too fast, and we wouldn't be able to see any distribution on other peers.
 
 ## Monte Carlo PI
 
